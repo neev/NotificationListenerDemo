@@ -1,0 +1,10 @@
+<resources>
+  <string name="app_name">NotiDemo2</string>
+  <string name="service_label">NotificationListenerDemo2</string>
+
+  <!-- Strings related to the Alert Dialog -->
+  <string name="notification_listener_service">"Notification Listener Service"</string>
+  <string name="notification_listener_service_explanation">"Its necessary to enable the Notification Listener Service. Enable it now?"</string>
+  <string name="yes">Yes</string>
+  <string name="no">No</string>
+</resources>
