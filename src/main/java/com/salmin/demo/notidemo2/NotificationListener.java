@@ -3,9 +3,12 @@ package com.salmin.demo.notidemo2;
 
 import android.app.Notification;
 import android.content.Intent;
+import android.os.Build;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+
+import static android.content.ContentValues.TAG;
 
 public class NotificationListener extends NotificationListenerService {
 
@@ -21,17 +24,20 @@ public class NotificationListener extends NotificationListenerService {
         Log.d("NotiDemo2", "onListenerConnected: was called");
         super.onListenerConnected();
         requestListenerHints(HINT_HOST_DISABLE_EFFECTS);
+
         //requestListenerHints(HINT_HOST_DISABLE_NOTIFICATION_EFFECTS);
 //        requestInterruptionFilter(INTERRUPTION_FILTER_ALARMS);
     }
+
+
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         Log.d("NotiDemo2", "onNotificationPosted: was called");
         super.onNotificationPosted(sbn);
 
-//        Notification notification = sbn.getNotification();
-//        Log.d("NotiDemo2", "onNotificationPosted: " + notification);
+       Notification notification = sbn.getNotification();
+        Log.d("NotiDemo2", "onNotificationPosted: " + notification);
 
         try {
             Thread.sleep(50);
@@ -42,6 +48,8 @@ public class NotificationListener extends NotificationListenerService {
 
 
 
+
+
 // to supress screen on
         /*sbn.getNotification().Policy (PRIORITY_CATEGORY_CALLS,
                 PRIORITY_SENDERS_ANY,
@@ -49,7 +57,10 @@ public class NotificationListener extends NotificationListenerService {
         SUPPRESSED_EFFECT_SCREEN_OFF);
 */
         //to cancel notification
-        //cancelNotification(sbn.getKey());
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M) {
+
+            cancelNotification(sbn.getKey());
+        }
 
 
         /**
@@ -59,6 +70,7 @@ public class NotificationListener extends NotificationListenerService {
         int notificationID = sbn.getId();
         Intent intent = new Intent("com.salmin.demo.notidemo2");
         intent.putExtra("Notification ID", notificationID);
+        Log.d(TAG, "onNotificationPosted: SENT INTENT");
         sendBroadcast(intent);
 
     }

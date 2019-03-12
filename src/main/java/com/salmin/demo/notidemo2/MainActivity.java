@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -23,6 +24,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,16 +51,41 @@ public class MainActivity extends AppCompatActivity {
         initAndSetClickListener(); // button to send the notification
         checkNotificationServiceIsEnabled(); // prompt to turn on notification service if needed.
        initAndRegisterReceiver(); // alternative to canceling the notification
+
+        Button cancelNotiButton = (Button) findViewById(R.id.cancel_noti_button);
+
+
+        // Turn off do not disturb mode, allow all notifications
+        cancelNotiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                /*
+                    int INTERRUPTION_FILTER_ALL
+                        Interruption filter constant - Normal interruption
+                        filter - no notifications are suppressed.
+                */
+                changeInterruptionFiler(NotificationManager.INTERRUPTION_FILTER_ALL);
+                Toast.makeText(getBaseContext(),"Now off do not disturb mode.",Toast.LENGTH_SHORT).show();
+
+                //mTVStats.setText("Now off do not disturb mode.");
+            }
+        });
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-//        unregisterReceiver(notiRecever);
+       unregisterReceiver(notiRecever);
     }
 
     private void initNotificationManager() {
         notiManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if(!isNotificationServiceEnabled())
+        {
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        }
     }
 
     private void initAndSetClickListener() {
@@ -194,9 +224,90 @@ public class MainActivity extends AppCompatActivity {
             final int notificationID = intent.getIntExtra("Notification ID", -1);
             Log.d(TAG, "notiManager ID = " + notificationID);
 
+            /*// implemented do not disturb for 10 min
+            final Timer timer = new Timer();
+// Note that timer has been declared final, to allow use in anon. class below
+            timer.schedule( new TimerTask()
+                            {
+                                private int i = 10;
+                                public void run()
+                                {
+                                    System.out.println("30 Seconds Later");
+                                    if (--i < 1) timer.cancel(); // Count down ten times, then cancel
+                                }
+                            }, 30000, 30000 //Note the second argument for repetition
+            );*/
+
             notiManager.cancel(notificationID);
-            notiManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            //notiManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+
+            changeInterruptionFiler(NotificationManager.INTERRUPTION_FILTER_NONE);
 
         }
     }
+
+
+    protected void changeInterruptionFiler(int interruptionFilter){
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){ // If api level minimum 23
+            /*
+                boolean isNotificationPolicyAccessGranted ()
+                    Checks the ability to read/modify notification policy for the calling package.
+                    Returns true if the calling package can read/modify notification policy.
+                    Request policy access by sending the user to the activity that matches the
+                    system intent action ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS.
+
+                    Use ACTION_NOTIFICATION_POLICY_ACCESS_GRANTED_CHANGED to listen for
+                    user grant or denial of this access.
+
+                Returns
+                    boolean
+
+            */
+            // If notification policy access granted for this package
+            if(notiManager.isNotificationPolicyAccessGranted()){
+                /*
+                    void setInterruptionFilter (int interruptionFilter)
+                        Sets the current notification interruption filter.
+
+                        The interruption filter defines which notifications are allowed to interrupt
+                        the user (e.g. via sound & vibration) and is applied globally.
+
+                        Only available if policy access is granted to this package.
+
+                    Parameters
+                        interruptionFilter : int
+                        Value is INTERRUPTION_FILTER_NONE, INTERRUPTION_FILTER_PRIORITY,
+                        INTERRUPTION_FILTER_ALARMS, INTERRUPTION_FILTER_ALL
+                        or INTERRUPTION_FILTER_UNKNOWN.
+                */
+
+                // Set the interruption filter
+                notiManager.setInterruptionFilter(interruptionFilter);
+            }else {
+                /*
+                    String ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
+                        Activity Action : Show Do Not Disturb access settings.
+                        Users can grant and deny access to Do Not Disturb configuration from here.
+
+                    Input : Nothing.
+                    Output : Nothing.
+                    Constant Value : "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS"
+                */
+                // If notification policy access not granted for this package
+                Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                startActivity(intent);
+            }
+        }
+        else if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M){
+
+            //NotificationManagerCompat.from(getBaseContext()).areNotificationsEnabled(‌​);
+            Log.d(TAG, "changeInterruptionFiler: cancel NOTIFCATIONS");
+
+            NotificationManagerCompat.from(getApplicationContext()).cancelAll();
+
+        }
+
+    }
+
+
 }
