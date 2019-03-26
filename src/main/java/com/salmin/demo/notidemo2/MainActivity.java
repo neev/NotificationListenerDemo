@@ -76,7 +76,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-       unregisterReceiver(notiRecever);
+        if(notiRecever !=null) {
+            unregisterReceiver(notiRecever);
+        }
     }
 
     private void initNotificationManager() {

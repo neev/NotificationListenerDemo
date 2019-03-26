@@ -2,7 +2,9 @@ package com.salmin.demo.notidemo2;
 
 
 import android.app.Notification;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -59,19 +61,28 @@ public class NotificationListener extends NotificationListenerService {
         //to cancel notification
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M) {
 
+            PackageManager pm = getApplicationContext().getPackageManager();
+            ComponentName componentName = new ComponentName(getPackageName(),
+                    ".NotificationListener.class");
+            pm.setComponentEnabledSetting(componentName,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
+            Log.d(TAG, "onNotificationPosted: CANCEL NOTI");
+
             cancelNotification(sbn.getKey());
         }
 
 
-        /**
-         * this was an alternative attempt at canceling the notification. MainActivity receives
-         * this broadcast and cancels the notification from there.
-         */
-        int notificationID = sbn.getId();
-        Intent intent = new Intent("com.salmin.demo.notidemo2");
-        intent.putExtra("Notification ID", notificationID);
-        Log.d(TAG, "onNotificationPosted: SENT INTENT");
-        sendBroadcast(intent);
+          /*  *//**
+             * this was an alternative attempt at canceling the notification. MainActivity receives
+             * this broadcast and cancels the notification from there.
+             *//*
+            int notificationID = sbn.getId();
+            Intent intent = new Intent("com.salmin.demo.notidemo2");
+            intent.putExtra("Notification ID", notificationID);
+            Log.d(TAG, "onNotificationPosted: SENT INTENT");
+            sendBroadcast(intent);
+*/
 
     }
 
